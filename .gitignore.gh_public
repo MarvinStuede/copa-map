@@ -57,7 +57,7 @@ venv/
 tests/
 
 # DB downloads
-src/copa_map/data/
+#src/copa_map/data/
 src/copa_map/data_io/
 #!src/copa_map/data/io_utils.py
 #src/copa_map/data/nosync/

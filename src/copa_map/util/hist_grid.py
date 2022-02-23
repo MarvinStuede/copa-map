@@ -8,8 +8,8 @@ import chaospy
 import numpy as np
 from sklearn.cluster import KMeans
 
-from cmr_people_gp.util import util
-from cmr_people_gp.util.grid import Grid
+from copa_map.util import util
+from copa_map.util.grid import Grid
 
 
 class HistGrid(Grid):

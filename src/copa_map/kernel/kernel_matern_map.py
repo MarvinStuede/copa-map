@@ -1,7 +1,7 @@
 """Module which provides a gpflow kernel taking into account the environment structure"""
 import numpy as np
-from cmr_people_gp.kernel.kernel_grid import KernelGrid
-from cmr_people_gp.util import util
+from copa_map.kernel.kernel_grid import KernelGrid
+from copa_map.util import util
 from gpflow.kernels.stationaries import Matern52
 import tensorflow as tf
 from brescount import matrix_minima_on_line

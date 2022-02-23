@@ -1,7 +1,7 @@
 """Module for Bresenham kernel"""
 
 import numpy as np
-from cmr_people_gp.util.occ_grid import OccGrid
+from copa_map.util.occ_grid import OccGrid
 import cv2
 
 

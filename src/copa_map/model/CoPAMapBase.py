@@ -11,17 +11,17 @@ import tensorflow as tf
 from dataclasses import dataclass, field
 from tqdm import tqdm
 from termcolor import colored
-import cmr_people_gp.model.model_utils as mu
-from cmr_people_gp.model.PeopleModel import ModelInterface, ModelParams
-from cmr_people_gp.model import Likelihoods
+import copa_map.model.model_utils as mu
+from copa_map.model.PeopleModel import ModelInterface, ModelParams
+from copa_map.model import Likelihoods
 from typing import Type
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from cmr_people_gp.model.Optimization import Optimization
+from copa_map.model.Optimization import Optimization
 from gpflow import set_trainable
 from functools import reduce
 import operator
 from tensorflow.python.framework.ops import EagerTensor
-from cmr_people_gp.util import util as ut
+from copa_map.util import util as ut
 from copy import copy
 from typing import Dict
 

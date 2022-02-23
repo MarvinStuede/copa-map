@@ -1,12 +1,12 @@
 """Module for the Bresenham Kernel based GP Model"""
 import gpflow
 from dataclasses import dataclass
-from cmr_people_gp.kernel.kernel_grid import KernelGrid
-import cmr_people_gp.model.model_utils as mu
-from cmr_people_gp.kernel.kernel_matern_map import MaternMap
-from cmr_people_gp.model.Optimization import Optimization
-from cmr_people_gp.model.CoPAMapBase import CoPAMapBase, CoPAMapParams
-from cmr_people_gp.util.occ_grid import OccGrid
+from copa_map.kernel.kernel_grid import KernelGrid
+import copa_map.model.model_utils as mu
+from copa_map.kernel.kernel_matern_map import MaternMap
+from copa_map.model.Optimization import Optimization
+from copa_map.model.CoPAMapBase import CoPAMapBase, CoPAMapParams
+from copa_map.util.occ_grid import OccGrid
 
 
 @dataclass

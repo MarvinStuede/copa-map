@@ -10,8 +10,8 @@ from gpflow.ci_utils import ci_niter  # not supported by gpflow 1.5.1
 # mpl.use('Agg')  # No display
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from cmr_people_gp.model.model_utils import get_kernel_instance
-import cmr_people_gp.util.util as ut
+from copa_map.model.model_utils import get_kernel_instance
+import copa_map.util.util as ut
 from tensorflow.python.framework.errors_impl import InvalidArgumentError
 
 

@@ -4,7 +4,7 @@ Module for Gamma grid
 Contains a class derived from Histogram grid to  consider observation time of cells and variance
 """
 
-from cmr_people_gp.util import hist_grid, util
+from copa_map.util import hist_grid, util
 import numpy as np
 import multiprocessing as mp
 from copy import copy

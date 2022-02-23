@@ -1,15 +1,15 @@
 """Module for domains, used for data subdivision into multiple GP"""
 
 import numpy as np
-from cmr_people_gp.model.CoPAMapBase import CoPAMapBase, CoPAMapParams
-from cmr_people_gp.model.CoPAMapBresenham import CoPAMapBresenham, PeopleGPBresenhamParams
-from cmr_people_gp.model.PeopleModel import ModelInterface
-from cmr_people_gp.util.grid import Grid
+from copa_map.model.CoPAMapBase import CoPAMapBase, CoPAMapParams
+from copa_map.model.CoPAMapBresenham import CoPAMapBresenham, PeopleGPBresenhamParams
+from copa_map.model.PeopleModel import ModelInterface
+from copa_map.util.grid import Grid
 from typing import Type, List
 # from termcolor import colored
 from abc import abstractmethod
-from cmr_people_gp.plots.plot_domain_allocation import PlotDomains
-from cmr_people_gp.util import util as ut
+from copa_map.plots.plot_domain_allocation import PlotDomains
+from copa_map.util import util as ut
 import os
 from datetime import datetime
 from fractions import gcd

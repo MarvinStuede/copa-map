@@ -16,7 +16,7 @@ from brescount import bres_line
 
 def logger():
     """Get the module logger"""
-    return logging.getLogger("cmr_people_gp")
+    return logging.getLogger("copa_map")
 
 
 def get_cpu_count():
@@ -183,7 +183,7 @@ def package_path(*paths, file=__file__):
 
 def abs_path():
     """Absolute package path"""
-    return os.path.abspath(os.path.join(sys.modules["cmr_people_gp"].__file__, os.pardir))
+    return os.path.abspath(os.path.join(sys.modules["copa_map"].__file__, os.pardir))
 
 
 def remove_small_objects_in_image(img, min_pixel_size):
