@@ -6,10 +6,12 @@ Contains a class dervied from grid to represent an occupancy map
 
 import cv2
 import numpy as np
-from cmr_people_gp.util import util
+from copa_map.util import util
 from matplotlib import transforms as mtf
-
-from cmr_people_gp.util.grid import Grid
+import yaml
+from copa_map.util.grid import Grid
+from os.path import join, isfile, split
+import imageio
 
 
 class OccGrid(Grid):
@@ -104,6 +106,70 @@ class OccGrid(Grid):
                 m_t_max[0],
                 m_t_min[1],
                 m_t_max[1]]
+
+    @classmethod
+    def from_ros_format(cls, path_yaml):
+        """
+        Create an instance of this class based on a ROS map
+
+        Standard .yaml/.png definition.
+        See Also: http://wiki.ros.org/map_server
+        Args:
+            path_yaml: Path to the yaml file
+
+        Returns:
+            Class instance
+        """
+        assert isfile(path_yaml), "Path must point to a yaml file"
+        try:
+            with open(path_yaml) as y_file:
+                fyaml = yaml.load(y_file, Loader=yaml.FullLoader)
+                origin = [fyaml['origin'][0], fyaml['origin'][1], 0]
+                resolution = fyaml['resolution']
+                # Get read image from name in yaml
+                tp1, tp2 = split(path_yaml)
+                ipath = join(tp1, fyaml['image'])
+                img = imageio.imread(ipath, pilmode="RGB")
+                (height, width, _) = img.shape
+                img = img[:, :, 0]
+                inst = cls(width=width * resolution, height=height * resolution,
+                           resolution=fyaml['resolution'], origin=origin,
+                           rotation=fyaml['origin'][2], img=img,
+                           morphological_transformation=False)
+                return inst
+
+        except OSError:
+            raise OSError("Map file could not be read")
+
+    def to_ros_format(self, path, name, format="png"):
+        """
+        Write the occupancy map to ROS compatible format
+
+        Standard .yaml/.png definition.
+        See Also: http://wiki.ros.org/map_server
+        Args:
+            path: Folder where the map should be written
+            name: name of the map
+            format: image format, "png" or "pgm"
+
+        Returns:
+            -
+        """
+        # Create meta data as yaml
+        yaml_dict = {
+            "image": name + "." + format,
+            "resolution": self.resolution,
+            "origin": self.orig,
+            "negate": 0,
+            "occupied_thresh": 0.65,
+            "free_thresh": 0.196,
+
+        }
+
+        with open(join(path, name + ".yaml"), 'w') as yaml_file:
+            yaml.dump(yaml_dict, yaml_file, default_flow_style=False)
+
+        imageio.imwrite(join(path, name + "." + format), self.img, format=format)
 
     def raycast(self, pos, testpos, in_grid_frame=False):
         """
