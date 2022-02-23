@@ -79,8 +79,10 @@ src/copa_map/model/*
 !src/copa_map/model/Domain.py
 !src/copa_map/model/Optimization.py
 !src/copa_map/model/model_utils.py
+!src/copa_map/model/ModelInterface.py
 
 src/copa_map/plots/*
+!src/copa_map/plots/PlotDomain.py
 src/copa_map/test_scripts/
 
 src/copa_map/util/fremen.py
