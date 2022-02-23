@@ -57,46 +57,46 @@ venv/
 tests/
 
 # DB downloads
-src/cmr_people_gp/data/
-src/cmr_people_gp/data_io/
-#!src/cmr_people_gp/data/io_utils.py
-#src/cmr_people_gp/data/nosync/
-#src/cmr_people_gp/data_io/debug_files/*
-#!src/cmr_people_gp/data_io/debug_files/days
-#src/cmr_people_gp/data_io/debug_files/days/*
-#src/cmr_people_gp/data_io/debug_files/database_download/*
-#!src/cmr_people_gp/data_io/debug_files/database_download/.gitkeep
-#!src/cmr_people_gp/data_io/debug_files/days/.gitkeep
+src/copa_map/data/
+src/copa_map/data_io/
+#!src/copa_map/data/io_utils.py
+#src/copa_map/data/nosync/
+#src/copa_map/data_io/debug_files/*
+#!src/copa_map/data_io/debug_files/days
+#src/copa_map/data_io/debug_files/days/*
+#src/copa_map/data_io/debug_files/database_download/*
+#!src/copa_map/data_io/debug_files/database_download/.gitkeep
+#!src/copa_map/data_io/debug_files/days/.gitkeep
 
-src/cmr_people_gp/evaluation/
+src/copa_map/evaluation/
 
-src/cmr_people_gp/examples/*
+src/copa_map/examples/*
 
-src/cmr_people_gp/model/*
-!src/cmr_people_gp/model/__init__.py
-!src/cmr_people_gp/model/CoPAMapBase.py
-!src/cmr_people_gp/model/CoPAMapBresenham.py
-!src/cmr_people_gp/model/Domain.py
-!src/cmr_people_gp/model/Optimization.py
-!src/cmr_people_gp/model/model_utils.py
+src/copa_map/model/*
+!src/copa_map/model/__init__.py
+!src/copa_map/model/CoPAMapBase.py
+!src/copa_map/model/CoPAMapBresenham.py
+!src/copa_map/model/Domain.py
+!src/copa_map/model/Optimization.py
+!src/copa_map/model/model_utils.py
 
-src/cmr_people_gp/plots/*
-src/cmr_people_gp/test_scripts/
+src/copa_map/plots/*
+src/copa_map/test_scripts/
 
-src/cmr_people_gp/util/fremen.py
-src/cmr_people_gp/util/grid_timeseries.py
-src/cmr_people_gp/util/reduce_atc.py
+src/copa_map/util/fremen.py
+src/copa_map/util/grid_timeseries.py
+src/copa_map/util/reduce_atc.py
 
 # Results and examples
-cmr_people_gp/examples/results/*
-!cmr_people_gp/examples/results/.gitkeep
-src/cmr_people_gp/data/results/*
-!src/cmr_people_gp/data/results/.gitkeep
-src/cmr_people_gp/logs/*
-!src/cmr_people_gp/logs/.gitkeep
+copa_map/examples/results/*
+!copa_map/examples/results/.gitkeep
+src/copa_map/data/results/*
+!src/copa_map/data/results/.gitkeep
+src/copa_map/logs/*
+!src/copa_map/logs/.gitkeep
 
 # c files
-src/cmr_people_gp/util/brescount.c
+src/copa_map/util/brescount.c
 
 # Misc
 *.mp4
