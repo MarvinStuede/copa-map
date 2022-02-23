@@ -58,6 +58,7 @@ tests/
 
 # DB downloads
 #src/copa_map/data/
+src/copa_map/data/*.pickle
 src/copa_map/data_io/
 #!src/copa_map/data/io_utils.py
 #src/copa_map/data/nosync/
@@ -70,7 +71,7 @@ src/copa_map/data_io/
 
 src/copa_map/evaluation/
 
-src/copa_map/examples/*
+#src/copa_map/examples/*
 
 src/copa_map/model/*
 !src/copa_map/model/__init__.py

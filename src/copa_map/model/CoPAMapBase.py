@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from tqdm import tqdm
 from termcolor import colored
 import copa_map.model.model_utils as mu
-from copa_map.model.PeopleModel import ModelInterface, ModelParams
+from copa_map.model.ModelInterface import ModelInterface, ModelParams
 from copa_map.model import Likelihoods
 from typing import Type
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
@@ -56,11 +56,6 @@ class CoPAMapParams(ModelParams):
     # gaussian_ml, gaussian or poisson
     # gaussian_ml is a multi-latent gaussian likelihood, where a second GP is used for the variance function
     likelihood: str = "gaussian_ml"
-
-    # Rate parameter of the adam optimizer
-    adam_rate: float = 0.01
-    # Gamma parameter for natural gradients
-    nat_gamma: float = 0.1
 
     # Parameters (Hyper, Trainable) of GP Model and Scalers
     # (Everything needed for reconstruction of already trained model)
@@ -283,8 +278,6 @@ class CoPAMapBase(ModelInterface):
         """
         use_temp_dim = True if X.shape[1] == 3 else False
 
-        Z = np.vstack((Z[0], Z[1]))
-
         if self.pr.normalize_input or self.pr.normalize_output:
             self.X, self.Y, self.Z = self._scale_data(X, Y, Z)
         else:
@@ -316,7 +309,6 @@ class CoPAMapBase(ModelInterface):
         optimized = self.optimization.optimize(model=model, optimizer=self.pr.optimizer,
                                                train_dataset=train_dataset, train_iter=train_iter,
                                                minibatch_size=self.pr.minibatch_size,
-                                               adam_rate=self.pr.adam_rate, nat_gamma=self.pr.nat_gamma,
                                                run_with_nearest_pd=self.pr.run_with_nearest_pd,
                                                xmin=xmin, xmax=xmax)
 

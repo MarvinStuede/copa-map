@@ -3,7 +3,7 @@
 import numpy as np
 from copa_map.model.CoPAMapBase import CoPAMapBase, CoPAMapParams
 from copa_map.model.CoPAMapBresenham import CoPAMapBresenham, PeopleGPBresenhamParams
-from copa_map.model.PeopleModel import ModelInterface
+from copa_map.model.ModelInterface import ModelInterface
 from copa_map.util.grid import Grid
 from typing import Type, List
 # from termcolor import colored
