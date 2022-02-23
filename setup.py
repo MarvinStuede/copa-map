@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    Setup file for cmr_people_gp.
+    Setup file for copa_map.
     Use setup.cfg to configure your project.
 
     This file was generated with PyScaffold 3.3.1.
@@ -16,7 +16,7 @@ import numpy
 ext_modules = [
     Extension(
         "brescount",
-        ["src/cmr_people_gp/util/brescount.pyx"],
+        ["src/copa_map/util/brescount.pyx"],
         extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
         extra_link_args=['-fopenmp'],
         include_dirs=[numpy.get_include()]
