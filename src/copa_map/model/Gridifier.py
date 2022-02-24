@@ -117,11 +117,9 @@ class Gridifier:
     def output_to_text(self, path):
         """
         Write the output values (X, Y, Z) to csv files.
+
         Args:
             path: Path, including a file prefix, where the files should be saved
-
-        Returns:
-            -
         """
         assert self._data_read()
         sX = self.X_data
@@ -186,7 +184,6 @@ class Gridifier:
             df_rob:       Pandas dataframe containing the robot positions. Expected format are columns named
                           (robot_x, robot_y, delta_t, t). delta_t refers to the dwell time at each pose.
         """
-
         # For each timestamp, grids are created in a loop, which extend the following training data arrays
         self.X_data = np.array([]).reshape(0, df_data.shape[1] - 1)  # Minus 1 because of t column
         # self.vis_data = np.array([]).reshape(0, X_detections[0].shape[1])
@@ -387,8 +384,11 @@ class Gridifier:
         return X_data, Y_data
 
     def _bin_rob_pos_and_dwell(self, tidx, df_rob: pd.DataFrame):
-        """Get the robot path and dwell times during a specific bin. Also returns a variable that indicates if this exact
-        path was returned for the last bin, to avoid multiple calculations of the same path"""
+        """Get the robot path and dwell times during a specific bin.
+
+        Also returns a variable that indicates if this exact path was returned for the last bin,
+        to avoid multiple calculations of the same path
+        """
         try:
             # Positions of the robot path
             df_bin = df_rob.loc[(df_rob.tidx_bin == tidx) & (df_rob.delta_t > 0)].drop(columns=['t'])
@@ -470,7 +470,7 @@ class Gridifier:
             rat_mesh.set_array(self.grids[i].rate.ravel())
             mesh_c.set_array(self.grids[i].counts.ravel())
             mesh_m.set_array(~self.grids[i].counts_masked.mask.ravel())
-            #z_scatter.set_offsets(np.vstack([Z[:, 0], Z[:, 1]]).T)
+            # z_scatter.set_offsets(np.vstack([Z[:, 0], Z[:, 1]]).T)
             ts = self.timestamps[i]
             if pd.isnull(ts):
                 strtime = ""

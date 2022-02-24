@@ -4,8 +4,10 @@ from sklearn.cluster import KMeans
 import pandas as pd
 from time import time
 
+
 class InducingInitializer:
     """Class to create inducing point locations by clustering"""
+
     def __init__(self, X, Y_all, alpha=0.02, seed=None):
         """
         Constructor
@@ -26,6 +28,7 @@ class InducingInitializer:
     def _cluster_kmeans_3d(self, num_inducing):
         """
         Cluster the spatio-temporal data completely
+
         Args:
             num_inducing: Number of inducing points (clusters)
 
@@ -40,6 +43,7 @@ class InducingInitializer:
     def _cluster_kmeans_2d(self, num_inducing):
         """
         Cluster data of each timestamp separately
+
         Args:
             num_inducing: Number of inducing points (clusters)
 
@@ -65,7 +69,6 @@ class InducingInitializer:
         """
         Create initial locations for inducing points
 
-
         Args:
             method: Can be either "2D-KMeans" or "3D-KMeans"
 
@@ -83,7 +86,7 @@ class InducingInitializer:
         else:
             raise NotImplementedError("Invalid inducing selection method")
         t_e = time()
-        print(method + " needed " + str(t_e - t_s)  + " seconds")
+        print(method + " needed " + str(t_e - t_s) + " seconds")
         # Sort by timestamp
         centers = centers[centers[:, 2].argsort()]
         centers[:, 2] = np.round(centers[:, 2])
@@ -93,11 +96,9 @@ class InducingInitializer:
     def output_to_text(self, path):
         """
         Write the output values (X, Y, Z) to csv files.
+
         Args:
             path: Path, including a file prefix, where the files should be saved
-
-        Returns:
-            -
         """
         assert self.Z, "Call get_init_inducing(...) before saving"
         pdZ = pd.DataFrame(data=self.Z, columns=["x_z1", "x_z2", "t_z"])

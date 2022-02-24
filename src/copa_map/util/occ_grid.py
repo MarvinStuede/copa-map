@@ -141,7 +141,7 @@ class OccGrid(Grid):
         except OSError:
             raise OSError("Map file could not be read")
 
-    def to_ros_format(self, path, name, format="png"):
+    def to_ros_format(self, path, name, fformat="png"):
         """
         Write the occupancy map to ROS compatible format
 
@@ -150,14 +150,11 @@ class OccGrid(Grid):
         Args:
             path: Folder where the map should be written
             name: name of the map
-            format: image format, "png" or "pgm"
-
-        Returns:
-            -
+            fformat: image format, "png" or "pgm"
         """
         # Create meta data as yaml
         yaml_dict = {
-            "image": name + "." + format,
+            "image": name + "." + fformat,
             "resolution": self.resolution,
             "origin": self.orig,
             "negate": 0,
