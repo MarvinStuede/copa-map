@@ -2,7 +2,7 @@
 # CoPA-Map: Gaussian Process-based spatio-temporal modeling of pedestrians
 
 
-CoPA-Map is a method to model spatio-temporal human activity with Gaussian Processes.
+CoPA-Map (**Co**ntinuous **P**edestrian **A**ctivity Map) is a method to model spatio-temporal human activity with Gaussian Processes.
 A focus lies on the creation based on observations by mobile robots.
 
 
