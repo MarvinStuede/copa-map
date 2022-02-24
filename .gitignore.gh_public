@@ -82,6 +82,8 @@ src/copa_map/model/*
 !src/copa_map/model/model_utils.py
 !src/copa_map/model/ModelInterface.py
 !src/copa_map/model/Likelihoods.py
+!src/copa_map/model/InitInducing.py
+!src/copa_map/model/Gridifier.py
 
 src/copa_map/plots/*
 !src/copa_map/plots/plot_domain_allocation.py
