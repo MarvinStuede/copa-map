@@ -24,7 +24,7 @@ Y = XY[:, 3].reshape(-1, 1)
 
 # Overwrite default params with these params
 # For default params, see class definition of CoPAMapParams class
-params = CoPAMapParams(opt_max_iters=50,
+params = CoPAMapParams(opt_max_iters=200,
                        normalize_output=True,
                        normalize_input=True,
                        minibatch_size=1100,
@@ -43,3 +43,4 @@ with open(params_sav_path, "wb") as f:
     pickle.dump(opt_params, f)
 
 print("Saved  optimized parameters to " + params_sav_path)
+print("Run copa_map_atc_test.py to visualize results")

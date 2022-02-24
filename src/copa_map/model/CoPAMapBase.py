@@ -90,7 +90,7 @@ def _likelihood_is_ml(params):
 class CoPAMapBase(ModelInterface):
     """Base class for Gaussian Process based People Occurrence modeling"""
 
-    def __init__(self, params: Type[CoPAMapParams]):
+    def __init__(self, params: Type[CoPAMapParams] = CoPAMapParams()):
         """Constructor"""
         self.pr = params
         self.x_spat_scaler = None
