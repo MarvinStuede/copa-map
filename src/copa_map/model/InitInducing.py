@@ -98,8 +98,8 @@ class InducingInitializer:
         Write the output values (X, Y, Z) to csv files.
 
         Args:
-            path: Path, including a file prefix, where the files should be saved
+            path: Path with csv suffix
         """
-        assert self.Z, "Call get_init_inducing(...) before saving"
+        assert (self.Z is not None), "Call get_init_inducing(...) before saving"
         pdZ = pd.DataFrame(data=self.Z, columns=["x_z1", "x_z2", "t_z"])
-        pdZ.to_csv(path + "_z.csv", index=False)
+        pdZ.to_csv(path, index=False)

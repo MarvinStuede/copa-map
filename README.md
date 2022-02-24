@@ -47,7 +47,22 @@ m_y, stdd_y = model.predict(X_test)
 
 ```
 #### Example scripts
-TODO
+The directory `src/copa_map/examples` includes example scripts to show the process of data preparation, training,
+and predicting. The scripts are numbered and use the result from the preceding script as input. However, zip files
+provide pre processed data, which is extracted if the resulting files are not found. Therefore every script can directly
+be executed.
+
+###### 01_atc_gridify_data.py
+This script takes people detections and robot poses as input to create a spatio-temporal grid. Detections are counted in
+the grid and for every cell an observation duration of the robot is calculated based on a field of view and an
+occupancy map. By standard configuration, at the end of a script a window opens where the grid data can be inspected.
+
+###### 02_copa_map_atc_train.py
+This script trains a CoPA-Map model based on the gridified data. The trained hyperparameters are then saved to a file.
+
+###### 02_copa_map_atc_test.py
+This script uses the trained hyperparameters and makes predictions at test inputs.
+
 ### Paper
 
     TODO
