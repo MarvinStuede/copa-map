@@ -28,7 +28,7 @@ def runner_obv_duration(grid, fov, poses, occ_map, d_t, mask):
     return dur_cum
 
 
-class GammaGrid(hist_grid.HistGrid):
+class RateGrid(hist_grid.HistGrid):
     """
     Rate grid to represent rate of each cell
 
@@ -39,7 +39,7 @@ class GammaGrid(hist_grid.HistGrid):
 
     def __init__(self, min_rate=None, cpu_count=None, scale_seconds=60., *args, **kwargs):
         """Constructor"""
-        super(GammaGrid, self).__init__(*args, **kwargs)
+        super(RateGrid, self).__init__(*args, **kwargs)
         self.obv_duration = None
         self.rate = None
         self.stddev = None
