@@ -58,6 +58,7 @@ tests/
 
 # DB downloads
 #src/copa_map/data/
+src/copa_map/data/*_path_*.csv
 src/copa_map/data/*.pickle
 src/copa_map/data_io/
 #!src/copa_map/data/io_utils.py
