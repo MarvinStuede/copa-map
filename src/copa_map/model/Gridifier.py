@@ -37,7 +37,7 @@ class GridParams:
     # Seed for use in random selections
     bin_seed: float = None
     # 2D-Kmeans, 3D-Kmeans
-    inducing_method: str = "3D-KMeans"
+    inducing_method: str = "2D-KMeans"
     # Minimum rate to set because gamma distribution requires values greater than zero
     rate_min: float = 1e-5
     # Minimum observation time in seconds for use cells in training data (reduces instability).
@@ -49,7 +49,7 @@ class GridParams:
     normalize_to_bin: bool = True
     # Outlier contamination
     # Remove this ratio of total data points as outliers
-    outlier_contam: float = 0.03
+    outlier_contam: float = 0.003
     # Instead of removing outliers by masking, set the value to min value
     set_outlier_to_min: bool = False
     # When creating the cells based on robot positions, incorporate the occupancy grid map to exclude cells that
@@ -119,14 +119,14 @@ class Gridifier:
         Write the output values (X, Y, Z) to csv files.
 
         Args:
-            path: Path, including a file prefix, where the files should be saved
+            path: Path with csv suffix
         """
         assert self._data_read()
         sX = self.X_data
         sY = self.Y_data_all[:, 0].reshape(-1, 1)
         sY[sY == 1e-3] = 1e-6
         pdXY = pd.DataFrame(data=np.hstack([sX, sY]), columns=["x1", "x2", "t", "y"])
-        pdXY.to_csv(path + "_xy.csv", index=False)
+        pdXY.to_csv(path, index=False)
 
     @classmethod
     def from_file(cls, path):
@@ -334,7 +334,7 @@ class Gridifier:
             print(colored("Created grid with " + str(params.cell_resolution)
                           + "m resolution, max counts per cell: " + str(np.max(self.counts)), "green"))
 
-        X_data, Y_data = self._bin_input_for_gp(params, self.counts, seed)
+        X_data, Y_data = self._bin_input_for_gp(self.counts)
 
         X_data, Y_data, Y_data_all = \
             self._bin_drop_outside_map(occ_map, X_data, Y_data, Y_data_all)
@@ -453,8 +453,8 @@ class Gridifier:
         # z_scatter = axs[1, 1].scatter(Z[:, 0], Z[:, 1], marker='o', color='black')
 
         axs[0, 1].set_title("Observation duration (filtered)")
-        axs[1, 0].set_title("Std deviation (filtered)")
-        axs[1, 1].set_title("Rate and inducing points (filtered)")
+        axs[1, 0].set_title("Std deviation (filtered) (Deprecated)")
+        axs[1, 1].set_title("Rate (filtered)")
         fig.colorbar(mesh_c, ax=axs[0, 0])
         fig.colorbar(obv_mesh, ax=axs[0, 1])
         fig.colorbar(var_mesh, ax=axs[1, 0])
