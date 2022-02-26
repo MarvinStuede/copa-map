@@ -96,7 +96,7 @@ class Domain(ModelInterface):
         if Z is None:
             use_inducing = False
         else:
-            Zf = (self._filter(Z[0]), self._filter(Z[1]))
+            Zf = self._filter(Z)
             use_inducing = True
 
         # Check if training data are within domain
