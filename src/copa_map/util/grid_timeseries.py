@@ -9,6 +9,7 @@ from math import pi
 from copa_map.util import util as ut
 from joblib import Parallel, delayed
 from sklearn.cluster import KMeans
+from copy import copy
 
 
 class GridTimeSeries(HistGrid):
@@ -18,7 +19,7 @@ class GridTimeSeries(HistGrid):
     Represents a grid, where the cells can contain time series data e.g. for frequency analysis
     """
 
-    def __init__(self, Tp_max=3600 * 20, Tp_min=3600 * 0.5, Tp_res=10000, freq_mode="fremen-aam", max_freq_num=10,
+    def __init__(self, Tp_max=3600 * 24 * 7, Tp_min=3600, Tp_res=12000, freq_mode="fremen-aam", max_freq_num=10,
                  *args, **kwargs):
         """
         Constructor
@@ -31,9 +32,9 @@ class GridTimeSeries(HistGrid):
             Tp_res: Resolution of expected frequencies. Will divide the interval [Tp_min, Tp_max] to obtain the given
                     number of frequencies inside the interval
             freq_mode:  Decides which method will be used to calculate the spectral data.
-                        Possible inputs: "nufft" or "fremen"
-            num_aam_freq: Number of frequencies that will be stored for aam method. A subset of these frequencies will
-                          be used for prediction.
+                        Possible inputs: "nufft", "fremen-aam" or "fremen-bam"
+            max_freq_num: Maximum number of frequencies to check. The best possible number will be determined by cross-
+                        validation.
 
             *args:
             **kwargs:
@@ -52,13 +53,29 @@ class GridTimeSeries(HistGrid):
             "GridTimeSeries.freq_mode should be 'nufft' or 'fremen-aam'  or 'fremen-bam'"
         super(GridTimeSeries, self).__init__(*args, **kwargs)
         # Create an empty array of time series cells
-
+        # Get number of cpus to calculate FFTs for multiple cells at the same time
         self.cpu_count = util.get_cpu_count()
 
         self.cells_ts = [[None for i in range(self.elements_y)] for j in range(self.elements_x)]
 
-    def set_data(self, positions: np.ndarray, rate, dwell_time, t: np.ndarray, in_grid_frame=False,
-                 split_train_valid=True):
+    def set_by_grid_matrices(self, X: np.ndarray, Y: np.ndarray, bin_size):
+        """
+        Set the data by the data input/output vectors used for a GP model
+
+        Args:
+            X: [n x 3] Input matrix with positions and timestamps
+            Y: [n x 1] Rates corresponding to positions
+            bin_size: Bin size that was used for data creation
+        """
+        # Copy the array to modify it
+        X_freq = copy(X)
+        # This class works with seconds
+        X_freq[:, 2] *= bin_size
+        # Dwell time is not needed (we want to make an analysis of the rates, not the counts)
+        self.set_data(positions=X_freq[:, :2], rate=Y, dwell_time=np.zeros_like(Y), t=X_freq[:, 2].reshape(-1))
+
+    def set_data(self, positions: np.ndarray, rate: np.ndarray, dwell_time: np.ndarray, t: np.ndarray,
+                 in_grid_frame=False):
         """
         Set the data of the time series.
 
@@ -67,7 +84,9 @@ class GridTimeSeries(HistGrid):
         contained timestamp
         Args:
             positions: nd array of positions in dimension (n, 2)
-            t: nd array of timestamps with dimenstion (n,)
+            rate: Rates of the different cells (people per time interval)
+            dwell_time: dwell times of the different cells (time interval)
+            t: timestamps of time-series
             in_grid_frame: If true, expect positions to be given in grid frame, else in world frame
 
 
@@ -91,12 +110,6 @@ class GridTimeSeries(HistGrid):
         if ind_unq == []:
             raise Exception("Grid does not contain measurements. Did you set the dimensions correctly?")
 
-        if split_train_valid:
-            num_folds = 5
-        else:
-            # tstart_valid = None
-            num_folds = 1
-
         # Iterate the cells with measurements
         for cell in ind_unq:
             # Get row indices of all rows with this specific index
@@ -104,17 +117,14 @@ class GridTimeSeries(HistGrid):
             # Write the data of this cell to a np array, then create a pandas dataframe from it
             data = np.column_stack([t[row_i], pos[row_i], rate[row_i], dwell_time[row_i]])
             df = pd.DataFrame(data=data, columns=["t", "pos_x", "pos_y", "rate", "d_t"])
-            # Convert to datetime, if parameter is given
+
             if self.freq_mode == "nufft":
-                self.cells_ts[cell[0]][cell[1]] = NUFFT(df=df, num_folds=num_folds)
-            elif self.freq_mode == "fremen-aam":
-                self.cells_ts[cell[0]][cell[1]] = FreMEn(df=df, num_folds=num_folds, mode="aam",
-                                                         max_freq_num=self.max_freq_num)
-            elif self.freq_mode == "fremen-bam":
-                self.cells_ts[cell[0]][cell[1]] = FreMEn(df=df, num_folds=num_folds, mode="bam",
+                self.cells_ts[cell[0]][cell[1]] = NUFFT(df=df)
+            else:
+                self.cells_ts[cell[0]][cell[1]] = FreMEn(df=df, mode=self.freq_mode[-3:],
                                                          max_freq_num=self.max_freq_num)
 
-        # self.set_counts(pos, in_grid_frame=True)
+        # Sort cells by rate and create weights for sampling
         cells_sorted = ind[np.flipud(np.argsort(rate))]
         ind_and_count = np.hstack([cells_sorted, rate.reshape(-1, 1)])
         _, idx = np.unique(cells_sorted, axis=0, return_index=True)
@@ -122,18 +132,6 @@ class GridTimeSeries(HistGrid):
         self.top_cells = cells_sorted[np.sort(idx)]
         self.sample_weights = np.array([np.sum(ind_and_count[np.all(ind_and_count[:, :2] == t_cell, axis=1)][:, 2])
                                         for t_cell in self.top_cells]).reshape(-1, 1)
-
-    def _get_freq_candidates(self):
-        """
-        Given on the period values, creates an array of candidate frequencies
-
-        Frequencies are given as circular frequencies
-        Returns: The range
-
-        """
-        step = (self.Tp_max - self.Tp_min) / self.Tp_res
-        np.arange(self.Tp_min, self.Tp_max, step)
-        return np.flipud(2 * pi / np.arange(self.Tp_min, self.Tp_max, step))
 
     def predict(self, Xt: np.ndarray):
         """Predict at stamped positions"""
@@ -164,7 +162,7 @@ class GridTimeSeries(HistGrid):
 
         Args:
             n_cells: Number of cells for which to do the spectral analysis
-            mode: "bam" or "aam", Best Amplitude Model or Additional Amplitude Model
+            sample: Choose cells by sampling based on their rate
             use_dwell_time: If true, dwell times of the robot will be incorporated in frequency analysis
 
         """
@@ -184,8 +182,6 @@ class GridTimeSeries(HistGrid):
         # Get the list of frequency cadidates
         self.freq_candidates = self._get_freq_candidates()
 
-        # Iterate through the cells
-
         def freq_analysis_process(index, cell, freq_cand):
             # Calculate the NUFFT or FreMEn for the cell
             cell.freq_analysis(freq_cand, use_dwell_time)
@@ -202,8 +198,20 @@ class GridTimeSeries(HistGrid):
 
         return self._gather_freqs_from_cells()
 
-    def _gather_freqs_from_cells(self):
+    def _get_freq_candidates(self):
+        """
+        Given on the period values, creates an array of candidate frequencies
 
+        Frequencies are given as circular frequencies
+        Returns: The range
+
+        """
+        step = (self.Tp_max - self.Tp_min) / self.Tp_res
+        np.arange(self.Tp_min, self.Tp_max, step)
+        return np.flipud(2 * pi / np.arange(self.Tp_min, self.Tp_max, step))
+
+    def _gather_freqs_from_cells(self):
+        """Put the complex magnitudes, frequencies and number of pred. frequencies into lists"""
         self.A_arr = []
         self.O_arr = []
         self.p_arr = []
@@ -216,7 +224,7 @@ class GridTimeSeries(HistGrid):
             self.O_arr.append(O_cell)
             self.p_arr.append(p_cell)
 
-    def get_clustered_periods(self):
+    def get_clustered_periods(self, max_weight=0.95):
         """Return the cluster centers of calculated frequencies"""
         psi = int(np.round(np.average(np.array(self.p_arr))))
         O_all = np.concatenate(self.O_arr)
@@ -232,6 +240,7 @@ class GridTimeSeries(HistGrid):
         # Return the cluster centers, sorted by influence in descending order (based on amplitude)
         clusters = km.cluster_centers_.ravel()[np.argsort(-weighted_centers.ravel(), axis=0)]
         weighted_centers = weighted_centers.ravel()[np.argsort(-weighted_centers.ravel(), axis=0)]
+        weighted_centers *= max_weight
         self.num_pred_freq = psi
         return clusters, weighted_centers
 

@@ -1,3 +1,5 @@
+"""Module for spectral analysis based on different methods"""
+
 from copa_map.util import util
 import pandas as pd
 import numpy as np
@@ -13,18 +15,19 @@ class SpectralData():
     """
     The SpectralData class
 
-    Class to represent a number of detections as a dataframe, resulting timeseries and spectral components of this data
+    Class to represent a number of detections as a dataframe, resulting timeseries and spectral components of this data.
+    The class implements a cross validation to determine the number of predictive frequencies.
+    All number of frequencies will be checked up to a maximum number
     """
 
-    def __init__(self, df: DataFrame, max_freq_num=10, num_folds=1):
+    def __init__(self, df: DataFrame, max_freq_num=10, num_folds=5):
         """
         Constructor
 
         Args:
-            df: Dataframe that contains (t, pos_x, pos_y) as columns
-            aam_freq_num: Number of frequencies that will be stored for aam method. A subset of these frequencies will
-                          be used for prediction.
-            num_folds: If one, to hold out cross validation, else do k-fold with this number of folds
+            df: Dataframe of the form ["t", "pos_x", "pos_y", "rate", "d_t"] x n
+            max_freq_num: Maximum number of predictive frequencies to check
+            num_folds: Number of folds to divide the data into
         """
         self.df = df.groupby("t").sum()
         self.df.reset_index(level=0, inplace=True)
@@ -48,15 +51,15 @@ class SpectralData():
         Do the frequency analysis with optional cross validation
 
         Args:
-            freq_candidates: Array with frequency candidates
+            freq_candidates: Array with frequency candidates (circular)
             method: nufft or fremen-aam or fremen-bam
             use_dwell_time: If true, dwell time of robot are considered in intensity calculation
 
         """
-
         if self.num_folds <= 1:
             raise NotImplementedError
-            # self.const_comp, self.prom_cplx_comp, self.prom_freq = self._freq_analysis(freq_candidates, use_dwell_time)
+            # self.const_comp, self.prom_cplx_comp, self.prom_freq = self._freq_analysis(freq_candidates,
+            # use_dwell_time)
             # self.num_pred_freqs, _ = self._determine_predict_freq_num(self.const_comp,
             #                                                           self.prom_cplx_comp,
             #                                                           self.prom_freq)
@@ -93,27 +96,27 @@ class SpectralData():
 
     @abstractmethod
     def _freq_analysis(self, freq_candidates, use_dwell_time):
+        """Abstract class to be implemented by specific method"""
         pass
 
-    def _poisson(self, t, s, dwell_time=None):
+    def _poisson(self, s, dwell_time=None):
         """
         Method to calculate poisson parameters
 
         Args:
-            s (np.array(float)): array which contains observations s at time t.
-            Default: 3600/6 seconds or 10 minutes.
+            s (np.array(float)): array which contains observations s
+            dwell_time (np.array(float)):  dwell times corresponding to observation
 
         Returns:
-            t_new (np.array(float)): array which contains times t where the poisson rate parameter gets evaluated
-            self.poisson_lambda (np.array(float)): array which contains poisson rate parameter at time t_
+            poisson_lambda (np.array(float)): array which contains poisson rate parameter at time t_
         """
         if dwell_time is None:
             return s
         counts = s * dwell_time
-        self.poisson_alpha = np.cumsum(counts) + 1
-        self.poisson_beta = np.cumsum(dwell_time) + 1
-        self.poisson_lambda = self.poisson_alpha / self.poisson_beta
-        return self.poisson_lambda
+        poisson_alpha = np.cumsum(counts) + 1
+        poisson_beta = np.cumsum(dwell_time) + 1
+        poisson_lambda = poisson_alpha / poisson_beta
+        return poisson_lambda
 
     def _determine_predict_freq_num(self, const_comp, prom_cplx_comp, prom_freq, min_freq=1):
         """
@@ -159,8 +162,19 @@ class SpectralData():
         return p
 
     def predict(self, t_rec, const_comp, prom_cplx_comp, prom_freq, num_prom_freq=None):
-        """"""
+        """
+        Predict with a reconstructed signal and a reduced number of frequencies
 
+        Args:
+            t_rec: Timestamps to predict at
+            const_comp: Constant component from freq. transform
+            prom_cplx_comp: Prominent complex components to recreate the signal from
+            prom_freq: Prominent frequencies to recreate the signal from
+            num_prom_freq: Number of components to use, if not given the pre-determined number will be used
+
+        Returns:
+            predicted signal
+        """
         if num_prom_freq is None:
             num_prom_freq = self.num_pred_freqs
         # print("Predicting with " + str(num_prom_freq) + " freqs")
@@ -178,7 +192,7 @@ class SpectralData():
         Args:
             num_prom_freq: Number of frequencies
             cplx_comp: Complex components resulting from the transformation based on FFT
-            freq_candidates: Set of frequency candidates
+            freq_candidates: Set of frequency candidates (circular)
 
         Returns:
             frequencies, complex components
@@ -203,7 +217,7 @@ class SpectralData():
             len: length of the signal
 
         Returns:
-            Array indices for the array of frequency candidates
+            Array indices for the array of frequency candidates (circular)
         """
         f = np.abs(cplx_comp / len)
         ind_maxima = argrelextrema(f, np.greater)[0]
@@ -239,19 +253,18 @@ class NUFFT(SpectralData):
         """
         Do the Non-uniform Fast Fourier Transform
 
-        Given a range of frequencies candidates, the timeseries will be transformed to frequency space
+        Given a range of circular requencies candidates, the timeseries will be transformed to frequency space
         Args:
             freq_candidates:    array of frequencies, where the spectrum will be evaluated. Equal to set
                                 Omega in FreMEn notation
-            use_dwell_time:     If true the dwell times will be used to form the activations by a Gamma distributed prior
-                                (see poisson function of base class)
+            use_dwell_time:     If true the dwell times will be used to form the activations by a Gamma distributed
+                                prior (see poisson function of base class)
 
         Returns:
             constant component of transformed signal
             complex components up to given maximum number
             frequencies up to given maximum number
         """
-
         t = self.ds.index.to_numpy()
         # convert to seconds (float)
         if isinstance(t[0], np.timedelta64):
@@ -260,11 +273,11 @@ class NUFFT(SpectralData):
         # Strengths of the timeseries
         s = self.ds.values.astype(np.double)
 
-        s = self._poisson(t, s)
+        s = self._poisson(s)
 
         # Calculate the spectral frequeny components by a type 3 NUFFT
-        cplx_comp = nufft1d3(t.astype(np.float32), s.astype(np.float32), freq_candidates.astype(np.float32)) / \
-                    self.t_len
+        cplx_comp = nufft1d3(t.astype(np.float32), s.astype(np.float32), freq_candidates.astype(np.float32)) \
+            / self.t_len
         const_comp = s.mean()
         prom_cplx_comp, prom_freq = self.calc_prominent_strengths(num_prom_freq=self.max_freq_num,
                                                                   cplx_comp=cplx_comp,
@@ -320,8 +333,8 @@ class FreMEn(SpectralData):
         Args:
             freq_candidates:    array of frequencies, where the spectrum will be evaluated. Equal to set
                                 Omega in FreMEn notation
-            use_dwell_time:     If true the dwell times will be used to form the activations by a Gamma distributed prior
-                                (see poisson function of base class)
+            use_dwell_time:     If true the dwell times will be used to form the activations by a Gamma distributed
+                                prior (see poisson function of base class)
 
         Returns:
             constant component of transformed signal
@@ -336,7 +349,7 @@ class FreMEn(SpectralData):
         cs = self.ds.values.astype(np.double)
         dt = self.dt.values.astype(np.double)
 
-        s = self._poisson(t, cs, dwell_time=dt if use_dwell_time else None)
+        s = self._poisson(cs, dwell_time=dt if use_dwell_time else None)
 
         if self.mode == "aam":
             const_comp, prom_cplx_comp, prom_freq = self.aam(t, s, freq_candidates=freq_candidates)

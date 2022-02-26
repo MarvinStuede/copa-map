@@ -146,7 +146,7 @@ class OccGrid(Grid):
         Write the occupancy map to ROS compatible format
 
         Standard .yaml/.png definition.
-        See Also: http://wiki.ros.org/map_server
+        See Also: http://wiki.ros.org/map_server#YAML_format
         Args:
             path: Folder where the map should be written
             name: name of the map
@@ -166,7 +166,7 @@ class OccGrid(Grid):
         with open(join(path, name + ".yaml"), 'w') as yaml_file:
             yaml.dump(yaml_dict, yaml_file, default_flow_style=False)
 
-        imageio.imwrite(join(path, name + "." + format), self.img, format=format)
+        imageio.imwrite(join(path, name + "." + fformat), self.img, format=fformat)
 
     def raycast(self, pos, testpos, in_grid_frame=False):
         """

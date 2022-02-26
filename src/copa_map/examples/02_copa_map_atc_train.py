@@ -11,7 +11,6 @@ import numpy as np
 from os.path import join
 from copa_map.util.grid_timeseries import GridTimeSeries
 import pickle
-from copy import copy
 
 data_folder = join(ut.abs_path(), "data")
 
@@ -33,20 +32,23 @@ Y = XY[:, 3].reshape(-1, 1)
 # Read the occupancy map to define the location of the grid
 occ_map = OccGrid.from_ros_format(path_yaml=join(data_folder, "atc_map.yaml"))
 
+# Now we create a new grid and will do a frequency analysis of the data in the different cells
+# Set the grid to the same coordinates as our map
+# Resolution is chosen larger than grid for input data of GP.
+# This avoids that outliers have a large influence
 grid_ts = GridTimeSeries(width=occ_map.width, height=occ_map.height, resolution=5.0,
                          origin=occ_map.orig, rotation=occ_map.rotation,
-                         freq_mode="nufft", Tp_max=7 * 3600 * 24,
-                         Tp_min=60 * 60, Tp_res=12000, max_freq_num=10)
-X_freq = copy(X)
+                         freq_mode="nufft", max_freq_num=10)
+# Set the data to the grid
+# Our bin size is one hour
 bin_size = 3600
-X_freq[:, 2] *= bin_size
-grid_ts.set_data(X_freq[:, :2], Y[:, 0], np.zeros_like(Y[:, 0]), X_freq[:, 2].reshape(-1))
-grid_ts.calc_freqs(n_cells=10)
-c, w = grid_ts.get_clustered_periods()
-w *= 0.95
+grid_ts.set_by_grid_matrices(X=X, Y=Y, bin_size=bin_size)
+# Do the frequency analysis for 10 cells, sampled based on their rate
+grid_ts.calc_freqs(n_cells=10, sample=True)
+# Cluster the results and
+psi_arr, sigma2_arr = grid_ts.get_clustered_periods(max_weight=0.95)
 
-
-
+# Create Parameters for our model
 # Overwrite default params with these params
 # For default params, see class definition of CoPAMapParams class
 params = CoPAMapParams(opt_max_iters=200,
@@ -54,11 +56,11 @@ params = CoPAMapParams(opt_max_iters=200,
                        normalize_input=True,
                        minibatch_size=1100,
                        use_inducing=True,
+                       periods=np.ravel(psi_arr / bin_size).tolist(),
+                       period_weights=sigma2_arr.tolist(),
                        likelihood="gaussian_ml",
                        train_inducing=True)
 
-params.periods = np.ravel((c / bin_size)).tolist()
-params.period_weights = w.tolist()
 print("Periods (in bin):")
 print(params.periods)
 print("Weights:")
