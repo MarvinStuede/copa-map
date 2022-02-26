@@ -91,7 +91,7 @@ src/copa_map/plots/*
 src/copa_map/test_scripts/
 
 src/copa_map/util/fremen.py
-src/copa_map/util/grid_timeseries.py
+!src/copa_map/util/grid_timeseries.py
 src/copa_map/util/reduce_atc.py
 
 # Results and examples
