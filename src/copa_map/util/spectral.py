@@ -29,11 +29,10 @@ class SpectralData():
         self.df = df.groupby("t").sum()
         self.df.reset_index(level=0, inplace=True)
         self.num_folds = num_folds
-        # Timeseries for count data (number of detections per time step)
-        self.ds = pd.Series(data=self.df.counts)
+        # Timeseries for rate data (number of detections per time step)
+        self.ds = pd.Series(data=self.df.rate)
         self.dt = pd.Series(data=self.df.d_t)
         self.ds.index = self.df.t
-        # self.ds = self.df['t'].value_counts().sort_index()
         # Length of the timeseries
         self.t_len = self.ds.__len__()
         # Complex spectral components
@@ -110,7 +109,8 @@ class SpectralData():
         """
         if dwell_time is None:
             return s
-        self.poisson_alpha = np.cumsum(s) + 1
+        counts = s * dwell_time
+        self.poisson_alpha = np.cumsum(counts) + 1
         self.poisson_beta = np.cumsum(dwell_time) + 1
         self.poisson_lambda = self.poisson_alpha / self.poisson_beta
         return self.poisson_lambda
@@ -159,7 +159,7 @@ class SpectralData():
         return p
 
     def predict(self, t_rec, const_comp, prom_cplx_comp, prom_freq, num_prom_freq=None):
-        """Predict at timestamps"""
+        """"""
 
         if num_prom_freq is None:
             num_prom_freq = self.num_pred_freqs
@@ -177,6 +177,8 @@ class SpectralData():
 
         Args:
             num_prom_freq: Number of frequencies
+            cplx_comp: Complex components resulting from the transformation based on FFT
+            freq_candidates: Set of frequency candidates
 
         Returns:
             frequencies, complex components
@@ -222,6 +224,13 @@ class SpectralData():
 
 
 class NUFFT(SpectralData):
+    """
+    Class to implement a NUFFT
+
+    NUFFT is approximated using the FINUFFT package
+    https://finufft.readthedocs.io/en/latest/
+
+    """
     def __init__(self, *args, **kwargs):
         """Constructor"""
         super(NUFFT, self).__init__(*args, **kwargs)
@@ -232,11 +241,15 @@ class NUFFT(SpectralData):
 
         Given a range of frequencies candidates, the timeseries will be transformed to frequency space
         Args:
-            freq_candidates:
+            freq_candidates:    array of frequencies, where the spectrum will be evaluated. Equal to set
+                                Omega in FreMEn notation
+            use_dwell_time:     If true the dwell times will be used to form the activations by a Gamma distributed prior
+                                (see poisson function of base class)
 
         Returns:
-            An array of complex components, representing the time series in the frequency space
-
+            constant component of transformed signal
+            complex components up to given maximum number
+            frequencies up to given maximum number
         """
 
         t = self.ds.index.to_numpy()
@@ -260,8 +273,20 @@ class NUFFT(SpectralData):
 
 
 class FreMEn(SpectralData):
+    """Class to represent spectral data transformed by the FreMEn method
+
+    It implements both the "Best-amplitude-model" and "Additional-amplitude-model" described by Jovan et al. in
+    F. Jovan, J. Wyatt, N. Hawes, and T. Krajník
+    “A Poisson-Spectral Model for Modelling Temporal Patterns in Human Data Observed by a Robot,”
+    in IEEE IROS, 2016, pp. 4013–4018.
+    """
     def __init__(self, mode="aam", *args, **kwargs):
-        """Constructor"""
+        """
+        Constructor
+
+        Args:
+            mode: aam or bam to select for respective method
+        """
         super(FreMEn, self).__init__(*args, **kwargs)
         self.mode = mode
         self.gamma_0 = None
@@ -280,7 +305,7 @@ class FreMEn(SpectralData):
         assert (t.shape == s.shape and len(t.shape) == len(
             s.shape)), "Observation arrays s and t must be the same dimension"
 
-        # update complex components by utilizing fremen method
+        # set complex components by utilizing fremen/incremental nufft method
         gamma_0 = s.mean()
         angles = t * freq_candidates.reshape(-1, 1)
         gamma = (((s - gamma_0) * np.exp(-1j * angles)).sum(axis=1)) / (t.shape[0])
@@ -295,9 +320,13 @@ class FreMEn(SpectralData):
         Args:
             freq_candidates:    array of frequencies, where the spectrum will be evaluated. Equal to set
                                 Omega in FreMEn notation
+            use_dwell_time:     If true the dwell times will be used to form the activations by a Gamma distributed prior
+                                (see poisson function of base class)
 
         Returns:
-            An array of complex components, representing the time series in the frequency space
+            constant component of transformed signal
+            complex components up to given maximum number
+            frequencies up to given maximum number
         """
         t = self.ds.index.to_numpy()
         # convert to seconds (float)
@@ -326,8 +355,9 @@ class FreMEn(SpectralData):
 
         "A Poisson-spectral model for modelling temporal patterns in human data observed by a robot"
         Args:
-            t: timestamps
-            s: Activations
+            t (np.array(float)): timestamps
+            s (np.array(float)): Activations
+            freq_candidates (np.array(float)): Set of frequency candidates
 
         """
         S = pd.DataFrame([[s.mean(), 0, 0]], columns=['o_abs', 'o_arg', 'omega'])
@@ -365,10 +395,8 @@ class FreMEn(SpectralData):
 
         const_comp = S.o_abs[0]
         cplx_comp = np.array(S.iloc[1:].o_abs) * np.exp(1j * np.array(S.iloc[1:].o_arg))
-        # self.prom_cplx_comp = cplx_comp.reshape(-1)[np.argsort(cplx_comp).reshape(-1)][:self.num_prom_freq]
         prom_cplx_comp = cplx_comp.reshape(-1)
         freq = np.array(S.iloc[1:].omega)
-        # self.prom_freq = freq.reshape(-1)[np.argsort(cplx_comp).reshape(-1)][:self.num_prom_freq]
         prom_freq = freq.reshape(-1)
         assert prom_cplx_comp is not None
         return const_comp, prom_cplx_comp, prom_freq

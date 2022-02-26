@@ -6,9 +6,12 @@ The model is saved and predictions/plots can then be made with the 03_copa_map_a
 
 from copa_map.util import util as ut
 from copa_map.model.CoPAMapBase import CoPAMapParams, CoPAMapBase
+from copa_map.util.occ_grid import OccGrid
 import numpy as np
 from os.path import join
+from copa_map.util.grid_timeseries import GridTimeSeries
 import pickle
+from copy import copy
 
 data_folder = join(ut.abs_path(), "data")
 
@@ -27,6 +30,23 @@ X = XY[:, :3]
 # Y: [n x 1] Target vector containing the rates of people c/Delta
 Y = XY[:, 3].reshape(-1, 1)
 
+# Read the occupancy map to define the location of the grid
+occ_map = OccGrid.from_ros_format(path_yaml=join(data_folder, "atc_map.yaml"))
+
+grid_ts = GridTimeSeries(width=occ_map.width, height=occ_map.height, resolution=5.0,
+                         origin=occ_map.orig, rotation=occ_map.rotation,
+                         freq_mode="nufft", Tp_max=7 * 3600 * 24,
+                         Tp_min=60 * 60, Tp_res=12000, max_freq_num=10)
+X_freq = copy(X)
+bin_size = 3600
+X_freq[:, 2] *= bin_size
+grid_ts.set_data(X_freq[:, :2], Y[:, 0], np.zeros_like(Y[:, 0]), X_freq[:, 2].reshape(-1))
+grid_ts.calc_freqs(n_cells=10)
+c, w = grid_ts.get_clustered_periods()
+w *= 0.95
+
+
+
 # Overwrite default params with these params
 # For default params, see class definition of CoPAMapParams class
 params = CoPAMapParams(opt_max_iters=200,
@@ -35,9 +55,14 @@ params = CoPAMapParams(opt_max_iters=200,
                        minibatch_size=1100,
                        use_inducing=True,
                        likelihood="gaussian_ml",
-                       periods=[12.0, 6.0],  # From init routine, TODO: add code
-                       period_weights=[0.92, 0.41],  # From init routine
                        train_inducing=True)
+
+params.periods = np.ravel((c / bin_size)).tolist()
+params.period_weights = w.tolist()
+print("Periods (in bin):")
+print(params.periods)
+print("Weights:")
+print(params.period_weights)
 
 model = CoPAMapBase(params=params)
 model.learn(X, Y, Z)

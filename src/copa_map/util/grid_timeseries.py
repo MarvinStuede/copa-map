@@ -57,7 +57,7 @@ class GridTimeSeries(HistGrid):
 
         self.cells_ts = [[None for i in range(self.elements_y)] for j in range(self.elements_x)]
 
-    def set_data(self, positions: np.ndarray, counts, dwell_time, t: np.ndarray, in_grid_frame=False,
+    def set_data(self, positions: np.ndarray, rate, dwell_time, t: np.ndarray, in_grid_frame=False,
                  split_train_valid=True):
         """
         Set the data of the time series.
@@ -102,8 +102,8 @@ class GridTimeSeries(HistGrid):
             # Get row indices of all rows with this specific index
             row_i = np.where(np.all(ind == cell, axis=1))
             # Write the data of this cell to a np array, then create a pandas dataframe from it
-            data = np.column_stack([t[row_i], pos[row_i], counts[row_i], dwell_time[row_i]])
-            df = pd.DataFrame(data=data, columns=["t", "pos_x", "pos_y", "counts", "d_t"])
+            data = np.column_stack([t[row_i], pos[row_i], rate[row_i], dwell_time[row_i]])
+            df = pd.DataFrame(data=data, columns=["t", "pos_x", "pos_y", "rate", "d_t"])
             # Convert to datetime, if parameter is given
             if self.freq_mode == "nufft":
                 self.cells_ts[cell[0]][cell[1]] = NUFFT(df=df, num_folds=num_folds)
@@ -115,8 +115,8 @@ class GridTimeSeries(HistGrid):
                                                          max_freq_num=self.max_freq_num)
 
         # self.set_counts(pos, in_grid_frame=True)
-        cells_sorted = ind[np.flipud(np.argsort(counts))]
-        ind_and_count = np.hstack([cells_sorted, counts.reshape(-1, 1)])
+        cells_sorted = ind[np.flipud(np.argsort(rate))]
+        ind_and_count = np.hstack([cells_sorted, rate.reshape(-1, 1)])
         _, idx = np.unique(cells_sorted, axis=0, return_index=True)
         # restore the sorted order after unique operation
         self.top_cells = cells_sorted[np.sort(idx)]
